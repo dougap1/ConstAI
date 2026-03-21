@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import { getDaysUntilDeadline } from './milestones'
 
-const DEFAULT_MODEL = 'gemini-2.0-flash'
+/** Prefer a model your AI Studio key can access; override with VITE_GEMINI_MODEL. */
+const DEFAULT_MODEL = 'gemini-1.5-flash'
 
 function goalPlanResponseSchema() {
   const dailyItemSchema = {
@@ -110,28 +111,53 @@ export async function generateGoalPlanFromGemini(intakeForGemini, apiKey, option
     milestoneModeHint: daysUntil > 14 ? 'weekly_nested' : 'daily',
   }
 
-  const result = await genModel.generateContent(
-    {
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: `Goal intake (JSON):\n${JSON.stringify(userPayload, null, 2)}`,
-            },
-          ],
-        },
-      ],
-    },
-    signal ? { signal } : undefined,
-  )
+  let result
+  try {
+    result = await genModel.generateContent(
+      {
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `Goal intake (JSON):\n${JSON.stringify(userPayload, null, 2)}`,
+              },
+            ],
+          },
+        ],
+      },
+      signal ? { signal } : undefined,
+    )
+  } catch (e) {
+    const msg = e?.message || String(e)
+    throw new Error(
+      `Gemini request failed (${model}): ${msg}. Check the key, model name, and network.`,
+    )
+  }
 
-  const text = result.response.text()
-  if (!text?.trim()) throw new Error('Empty Gemini response')
-  return JSON.parse(text)
+  let text
+  try {
+    text = result.response.text()
+  } catch (e) {
+    const msg = e?.message || String(e)
+    throw new Error(`Gemini blocked or empty response: ${msg}`)
+  }
+
+  if (!text?.trim()) throw new Error('Empty Gemini response body')
+  try {
+    return JSON.parse(text)
+  } catch (e) {
+    throw new Error(
+      `Gemini returned non-JSON: ${e?.message || e}. Snippet: ${text.slice(0, 120)}…`,
+    )
+  }
 }
 
 export function readGeminiApiKeyFromEnv() {
   const k = import.meta.env.VITE_GEMINI_API_KEY
-  return typeof k === 'string' ? k.trim() : ''
+  if (typeof k !== 'string') return ''
+  return k
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
 }

@@ -96,16 +96,29 @@ export default function App() {
     setCreatingGoal(true)
     try {
       let geminiRaw = null
+      let geminiError = null
       const apiKey = readGeminiApiKeyFromEnv()
       if (apiKey) {
         try {
           const payload = buildIntakeForModel(intake)
           geminiRaw = await generateGoalPlanFromGemini(payload, apiKey)
         } catch (err) {
+          geminiError = err?.message || String(err)
           console.error('Gemini goal plan failed, using local fallback:', err)
         }
       }
       const goal = createGoalFromIntake(intake, geminiRaw)
+      if (apiKey && goal.planSource === 'fallback') {
+        if (geminiError) {
+          setTaskToast(
+            `Couldn’t reach Gemini — using the template plan. (${geminiError.slice(0, 140)}${geminiError.length > 140 ? '…' : ''})`,
+          )
+        } else {
+          setTaskToast(
+            'Gemini replied but the plan didn’t validate — using the template plan. Check the browser console.',
+          )
+        }
+      }
       setGoals((prev) => [...prev, goal])
       setTone(goal.toneStyle)
       setSelectedGoalId(goal.id)
