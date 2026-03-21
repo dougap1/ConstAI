@@ -1,14 +1,71 @@
 /**
  * Builds a default weekly schedule from availability text until Gemini refines it.
- * Gemini hook: replace this with API-normalized slots from the model.
+ * Gemini hook: replace with API-normalized slots from the model.
  */
+import {
+  formatDualRange,
+  parseFlexibleWindow,
+} from './timeFormat'
+
 const DEFAULT_WEEKDAY_WINDOWS = ['07:00–09:00', '17:30–20:00']
 const DEFAULT_WEEKEND_WINDOWS = ['10:00–14:00']
 
 function extractTimeLikeFragments(text) {
   if (!text || typeof text !== 'string') return []
-  const matches = text.match(/\d{1,2}:\d{2}\s*[–—-]\s*\d{1,2}:\d{2}/g)
-  return matches?.length ? matches.map((m) => m.replace(/—/g, '–')) : []
+  const parts = text
+    .split(/[;,]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  const parsed = parts.filter((p) => parseFlexibleWindow(p))
+  if (parsed.length) return parsed.map((p) => p.replace(/[—]/g, '–'))
+  const m24 = text.match(/\d{1,2}:\d{2}\s*[–—-]\s*\d{1,2}:\d{2}/g)
+  return m24?.length ? m24.map((x) => x.replace(/[—]/g, '–')) : []
+}
+
+function parseRangeToMinutes(range) {
+  const p = parseFlexibleWindow(range)
+  if (!p) return 0
+  return Math.max(0, p.endMin - p.startMin)
+}
+
+/** Uniform display line: 12h with AM/PM · 24h */
+export function formatScheduleWindowLine(windowStr) {
+  const p = parseFlexibleWindow(windowStr)
+  if (!p) return windowStr.trim()
+  return formatDualRange(p.startMin, p.endMin)
+}
+
+function mapDisplayWindows(windows) {
+  return (windows || []).map((w) => formatScheduleWindowLine(w))
+}
+
+/** Sum of weekday window lengths — proxy for “available minutes / day”. */
+export function totalWeekdayMinutesFromSchedule(schedule) {
+  const windows = schedule?.weekdays?.windows
+  if (!windows?.length) {
+    return DEFAULT_WEEKDAY_WINDOWS.reduce(
+      (s, w) => s + parseRangeToMinutes(w),
+      0,
+    )
+  }
+  return windows.reduce((s, w) => s + parseRangeToMinutes(w), 0)
+}
+
+export function computeAllottedMinutesPerTask(schedule, taskCount) {
+  const total = totalWeekdayMinutesFromSchedule(schedule)
+  const n = Math.max(1, taskCount)
+  const raw = Math.round(total / n)
+  return Math.max(15, Math.min(240, raw || 25))
+}
+
+export function getTaskAllottedMinutes(task, goal) {
+  if (task?.allottedMinutes != null) return task.allottedMinutes
+  if (goal?.schedule)
+    return computeAllottedMinutesPerTask(
+      goal.schedule,
+      goal.tasks?.length ?? 1,
+    )
+  return 25
 }
 
 export function buildDefaultSchedule({
@@ -25,11 +82,13 @@ export function buildDefaultSchedule({
     weekdays: {
       days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
       windows: weekdayWindows,
+      displayWindows: mapDisplayWindows(weekdayWindows),
       sourceText: weekdayAvailability,
     },
     weekends: {
       days: ['Sat', 'Sun'],
       windows: weekendWindows,
+      displayWindows: mapDisplayWindows(weekendWindows),
       sourceText: weekendAvailability,
     },
   }

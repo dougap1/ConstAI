@@ -6,3 +6,8 @@
 export function recordTaskDeleteReflection(reason) {
   return reason.length
 }
+
+/** @param {string} reason */
+export function recordGoalRemoveReflection(reason) {
+  return reason.length
+}

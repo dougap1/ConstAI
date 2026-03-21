@@ -1,9 +1,9 @@
 import {
-  dummyMilestones,
   dummyTasks,
   dummyMotivationalNote,
 } from '../data/seedGoal'
-import { buildDefaultSchedule } from './schedule'
+import { buildMilestonePlan } from './milestones'
+import { buildDefaultSchedule, computeAllottedMinutesPerTask } from './schedule'
 
 /**
  * Assembles a goal record from the creation wizard.
@@ -34,6 +34,8 @@ export function createGoalFromIntake({
     schedule,
   }
 
+  const milestonePlan = buildMilestonePlan(deadline, toneStyle)
+
   return {
     id: crypto.randomUUID(),
     title: title.trim(),
@@ -44,11 +46,15 @@ export function createGoalFromIntake({
     weekendAvailability: weekendAvailability.trim(),
     toneStyle,
     schedule,
+    milestonePlan,
     /** Raw payload for future Gemini POST — do not remove when wiring API */
     intakeForGemini,
     motivationalNote:
       whyItMatters.trim() || dummyMotivationalNote(),
-    milestones: dummyMilestones(),
-    tasks: dummyTasks(),
+    tasks: (() => {
+      const base = dummyTasks()
+      const per = computeAllottedMinutesPerTask(schedule, base.length)
+      return base.map((t) => ({ ...t, allottedMinutes: per }))
+    })(),
   }
 }

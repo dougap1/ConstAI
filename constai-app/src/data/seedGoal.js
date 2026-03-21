@@ -11,12 +11,32 @@ export function dummyMilestones() {
   ]
 }
 
-export function dummyTasks() {
+export function dummyTasks(allottedMinutesEach = 25) {
   return [
-    { id: 'd1', title: '10 min clarity write-up', done: false },
-    { id: 'd2', title: 'Block deep work (no meetings)', done: false },
-    { id: 'd3', title: 'Review weekly milestones', done: false },
-    { id: 'd4', title: 'One small win for future-you', done: false },
+    {
+      id: 'd1',
+      title: '10 min clarity write-up',
+      done: false,
+      allottedMinutes: allottedMinutesEach,
+    },
+    {
+      id: 'd2',
+      title: 'Block deep work (no meetings)',
+      done: false,
+      allottedMinutes: allottedMinutesEach,
+    },
+    {
+      id: 'd3',
+      title: 'Review weekly milestones',
+      done: false,
+      allottedMinutes: allottedMinutesEach,
+    },
+    {
+      id: 'd4',
+      title: 'One small win for future-you',
+      done: false,
+      allottedMinutes: allottedMinutesEach,
+    },
   ]
 }
 

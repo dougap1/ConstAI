@@ -8,6 +8,7 @@ export default function GoalList({
   goals,
   selectedGoalId,
   onSelectGoal,
+  onRequestRemoveGoal,
   headerSlot,
   footerSlot,
 }) {
@@ -26,6 +27,11 @@ export default function GoalList({
               deadline={g.deadline}
               selected={g.id === selectedGoalId}
               onClick={() => onSelectGoal(g.id)}
+              onRequestRemove={
+                onRequestRemoveGoal
+                  ? () => onRequestRemoveGoal(g.id, g.title)
+                  : undefined
+              }
             />
           )
         })}

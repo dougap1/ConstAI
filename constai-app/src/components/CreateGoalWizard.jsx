@@ -184,7 +184,7 @@ export default function CreateGoalWizard({ onComplete, onCancel }) {
                   weekdayAvailability: e.target.value,
                 }))
               }
-              placeholder="e.g. 07:00–09:00, 17:30–20:00"
+              placeholder="e.g. 7:00 AM–9:00 AM, 5:30 PM–8:00 PM or 17:30–20:00"
               className={fieldClass}
             />
           </div>
@@ -206,7 +206,7 @@ export default function CreateGoalWizard({ onComplete, onCancel }) {
                   weekendAvailability: e.target.value,
                 }))
               }
-              placeholder="e.g. 10:00–14:00"
+              placeholder="e.g. 10:00 AM–2:00 PM or 10:00–14:00"
               className={fieldClass}
             />
           </div>
@@ -223,8 +223,9 @@ export default function CreateGoalWizard({ onComplete, onCancel }) {
           </div>
 
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            A default schedule is generated from availability text. Gemini will
-            refine this later — see <code className="text-sky-700 dark:text-sky-300">intakeForGemini</code> on the goal object.
+            A default schedule is generated from your text (12h with AM/PM or 24h).
+            The dashboard shows both formats for every window. Gemini will refine
+            this later — see <code className="text-sky-700 dark:text-sky-300">intakeForGemini</code> on the goal object.
           </p>
 
           <div className="flex flex-wrap gap-2 pt-1">
