@@ -9,6 +9,7 @@ import CreateGoalWizard from './components/CreateGoalWizard'
 import FocusTimerOverlay from './components/FocusTimerOverlay'
 import GoalCelebrationModal from './components/GoalCelebrationModal'
 import TaskCompletedToast from './components/TaskCompletedToast'
+import GeminiDebugPanel from './components/GeminiDebugPanel'
 import { DAILY_QUOTES } from './data/seedGoal'
 import { buildIntakeForModel, createGoalFromIntake } from './lib/createGoalModel'
 import {
@@ -45,6 +46,8 @@ const FLOW_CARDS = [
   },
 ]
 
+const MAX_DEBUG_JSON_CHARS = 12000
+
 export default function App() {
   const [goals, setGoals] = useState([])
   const [selectedGoalId, setSelectedGoalId] = useState(null)
@@ -58,6 +61,7 @@ export default function App() {
   const [celebration, setCelebration] = useState(null)
   const [taskToast, setTaskToast] = useState(null)
   const [creatingGoal, setCreatingGoal] = useState(false)
+  const [geminiDebug, setGeminiDebug] = useState(null)
 
   useEffect(() => {
     timerSessionRef.current = timerSession
@@ -94,30 +98,57 @@ export default function App() {
 
   async function handleIntakeComplete(intake) {
     setCreatingGoal(true)
+    setGeminiDebug(null)
     try {
       let geminiRaw = null
       let geminiError = null
+      let geminiCaught = null
       const apiKey = readGeminiApiKeyFromEnv()
       if (apiKey) {
         try {
           const payload = buildIntakeForModel(intake)
           geminiRaw = await generateGoalPlanFromGemini(payload, apiKey)
         } catch (err) {
+          geminiCaught = err
           geminiError = err?.message || String(err)
           console.error('Gemini goal plan failed, using local fallback:', err)
         }
       }
       const goal = createGoalFromIntake(intake, geminiRaw)
       if (apiKey && goal.planSource === 'fallback') {
-        if (geminiError) {
-          setTaskToast(
-            `Couldn’t reach Gemini — using the template plan. (${geminiError.slice(0, 140)}${geminiError.length > 140 ? '…' : ''})`,
-          )
-        } else {
-          setTaskToast(
-            'Gemini replied but the plan didn’t validate — using the template plan. Check the browser console.',
-          )
+        let responsePreview = null
+        if (geminiRaw != null) {
+          try {
+            const s = JSON.stringify(geminiRaw, null, 2)
+            responsePreview =
+              s.length > MAX_DEBUG_JSON_CHARS
+                ? `${s.slice(0, MAX_DEBUG_JSON_CHARS)}\n\n… [truncated at ${MAX_DEBUG_JSON_CHARS} chars]`
+                : s
+          } catch {
+            responsePreview = String(geminiRaw)
+          }
         }
+        if (geminiError) {
+          setGeminiDebug({
+            at: new Date().toISOString(),
+            headline: 'Gemini request failed (template plan used)',
+            detail: geminiError,
+            stack: geminiCaught?.stack ?? null,
+            responsePreview,
+          })
+        } else {
+          setGeminiDebug({
+            at: new Date().toISOString(),
+            headline: 'Gemini returned JSON that failed validation',
+            detail:
+              'Tasks or milestonePlan did not pass local checks (see preview below). Compare shapes to normalizeGeminiGoalPlan in createGoalModel.js.',
+            stack: null,
+            responsePreview,
+          })
+        }
+      }
+      if (apiKey && goal.planSource === 'gemini') {
+        setGeminiDebug(null)
       }
       setGoals((prev) => [...prev, goal])
       setTone(goal.toneStyle)
@@ -283,6 +314,11 @@ export default function App() {
       <TaskCompletedToast
         message={taskToast}
         onDismiss={() => setTaskToast(null)}
+      />
+
+      <GeminiDebugPanel
+        debug={geminiDebug}
+        onDismiss={() => setGeminiDebug(null)}
       />
 
       <footer className="border-t border-slate-200/80 py-8 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">

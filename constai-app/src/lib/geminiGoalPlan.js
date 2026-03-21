@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import { getDaysUntilDeadline } from './milestones'
 
 /** Prefer a model your AI Studio key can access; override with VITE_GEMINI_MODEL. */
-const DEFAULT_MODEL = 'gemini-1.5-flash'
+const DEFAULT_MODEL = 'gemini-2.5-flash'
 
 function goalPlanResponseSchema() {
   const dailyItemSchema = {
