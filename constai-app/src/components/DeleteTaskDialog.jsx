@@ -34,7 +34,7 @@ export default function DeleteTaskDialog({
         onClick={closeWithoutDelete}
         aria-label="Close dialog"
       />
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-slate-200/90 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+      <div className="constai-animate-in relative z-10 w-full max-w-md rounded-3xl border border-slate-200/90 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
         <h2
           id="delete-task-title"
           className="font-display text-lg font-semibold text-slate-900 dark:text-white"
@@ -55,7 +55,7 @@ export default function DeleteTaskDialog({
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             placeholder="A short honest reason helps future-you…"
-            className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:placeholder:text-slate-500"
+            className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:placeholder:text-slate-500"
           />
         </label>
         <div className="mt-5 flex flex-wrap justify-end gap-2">

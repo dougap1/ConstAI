@@ -1,70 +1,59 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import GoalList from './components/GoalList'
 import GoalDashboard from './components/GoalDashboard'
 import Quote from './components/Quote'
 import TonePicker from './components/TonePicker'
 import ScrollLinkedStrip from './components/ScrollLinkedStrip'
 import DeleteTaskDialog from './components/DeleteTaskDialog'
-import {
-  DAILY_QUOTES,
-  dummyMilestones,
-  dummyTasks,
-  dummyMotivationalNote,
-} from './data/seedGoal'
+import CreateGoalWizard from './components/CreateGoalWizard'
+import FocusTimerOverlay from './components/FocusTimerOverlay'
+import { DAILY_QUOTES } from './data/seedGoal'
+import { createGoalFromIntake } from './lib/createGoalModel'
 import { recordTaskDeleteReflection } from './lib/analyticsStub'
 
-/**
- * Creates a goal with seeded dummy milestones/tasks.
- * Backend hook: POST /goals → replace with API response shape.
- * AI hook: merge agent-generated milestones & tasks into this object.
- */
-function createGoal(title) {
-  return {
-    id: crypto.randomUUID(),
-    title: title.trim(),
-    motivationalNote: dummyMotivationalNote(),
-    milestones: dummyMilestones(),
-    tasks: dummyTasks(),
-  }
-}
-
-/** Horizontal strip cards — swap for AI “focus lanes” or live metrics later. */
+/** Horizontal strip — swap for AI “focus lanes” or live metrics later. */
 const FLOW_CARDS = [
   {
     id: 'f1',
     kicker: 'Depth',
     title: 'Protect a single deep window',
-    body: 'ConstAI is built for one honest block at a time. Let the edges blur on purpose.',
+    body: 'ConstAI keeps one honest block at a time. Let the timer carry the weight.',
   },
   {
     id: 'f2',
     kicker: 'Signal',
     title: 'Milestones over noise',
-    body: 'Weekly arcs give your brain a horizon. Tasks are just how you walk there.',
+    body: 'Weekly arcs give your brain a horizon. Tasks are how you walk there.',
   },
   {
     id: 'f3',
-    kicker: 'Agency',
-    title: 'You choose the tone',
-    body: 'Strict, calm, or neutral — future AI coaching can mirror the voice you want.',
+    kicker: 'Tone',
+    title: 'Match the voice to the season',
+    body: 'Each goal stores tone style for future Gemini coaching — strict, calm, or neutral.',
   },
   {
     id: 'f4',
-    kicker: 'Next',
-    title: 'Timer & nudges',
-    body: 'Placeholder controls are wired so Pomodoro, reminders, or agent pings drop in cleanly.',
+    kicker: 'Timer',
+    title: 'Finish the session, finish the task',
+    body: 'Complete a focus run and today’s target task checks itself off — persistence hooks are ready.',
   },
 ]
 
 export default function App() {
   const [goals, setGoals] = useState([])
   const [selectedGoalId, setSelectedGoalId] = useState(null)
-  const [newTitle, setNewTitle] = useState('')
   const [tone, setTone] = useState('neutral')
   const [quoteIndex] = useState(() =>
     Math.floor(Math.random() * DAILY_QUOTES.length),
   )
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [timerFocusTaskId, setTimerFocusTaskId] = useState(null)
+  const [timerSession, setTimerSession] = useState(null)
+  const timerSessionRef = useRef(null)
+
+  useEffect(() => {
+    timerSessionRef.current = timerSession
+  }, [timerSession])
 
   const selectedGoal = useMemo(
     () => goals.find((g) => g.id === selectedGoalId) ?? null,
@@ -73,12 +62,16 @@ export default function App() {
 
   const dailyQuote = DAILY_QUOTES[quoteIndex % DAILY_QUOTES.length]
 
-  function handleCreateGoal(e) {
-    e.preventDefault()
-    if (!newTitle.trim()) return
-    const goal = createGoal(newTitle)
+  function handleSelectGoalFromList(id) {
+    setTimerFocusTaskId(null)
+    setSelectedGoalId(id)
+  }
+
+  function handleIntakeComplete(intake) {
+    const goal = createGoalFromIntake(intake)
     setGoals((prev) => [...prev, goal])
-    setNewTitle('')
+    setTone(goal.toneStyle)
+    setTimerFocusTaskId(null)
     setSelectedGoalId(goal.id)
   }
 
@@ -111,8 +104,37 @@ export default function App() {
     setDeleteTarget(null)
   }
 
-  function handleTimerPlaceholder() {
-    // AI / integrations: open Pomodoro, sync calendar focus, or start agent session
+  function handleOpenTimer() {
+    if (!selectedGoal) return
+    const id =
+      timerFocusTaskId ??
+      selectedGoal.tasks.find((t) => !t.done)?.id ??
+      selectedGoal.tasks[0]?.id
+    const task = selectedGoal.tasks.find((t) => t.id === id)
+    if (!task) return
+    setTimerSession({
+      goalId: selectedGoal.id,
+      taskId: task.id,
+      taskTitle: task.title,
+      goalTitle: selectedGoal.title,
+    })
+  }
+
+  function handleTimerSessionComplete(taskId) {
+    const gid = timerSessionRef.current?.goalId
+    if (!gid) return
+    setGoals((prev) =>
+      prev.map((g) =>
+        g.id !== gid
+          ? g
+          : {
+              ...g,
+              tasks: g.tasks.map((t) =>
+                t.id === taskId ? { ...t, done: true } : t,
+              ),
+            },
+      ),
+    )
   }
 
   return (
@@ -127,15 +149,15 @@ export default function App() {
       <header className="border-b border-slate-200/80 bg-white/40 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/40">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:flex-row sm:items-end sm:justify-between sm:px-6 lg:px-8">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-violet-600 dark:text-violet-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-600 dark:text-sky-400">
               ConstAI
             </p>
             <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
               Quiet structure for ambitious weeks
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              Goals live in memory for now — drop in AI summaries or persistence
-              when you wire the backend.
+              Goals hold intake for Gemini later — today they run on smart
+              defaults and local state.
             </p>
           </div>
           <TonePicker value={tone} onChange={setTone} />
@@ -146,12 +168,19 @@ export default function App() {
         id="main"
         className="mx-auto max-w-6xl space-y-10 px-4 py-10 sm:px-6 lg:px-8"
       >
-        <Quote text={dailyQuote.text} attribution={dailyQuote.attribution} />
+        <Quote
+          text={dailyQuote.text}
+          attribution={dailyQuote.attribution}
+          className="constai-animate-in"
+        />
 
         {selectedGoal ? (
           <GoalDashboard
             goal={selectedGoal}
             tone={tone}
+            timerFocusTaskId={timerFocusTaskId}
+            onTimerFocusTaskChange={setTimerFocusTaskId}
+            onOpenTimer={handleOpenTimer}
             onToggleTask={(taskId) =>
               handleToggleTask(selectedGoal.id, taskId)
             }
@@ -165,52 +194,22 @@ export default function App() {
                 })
             }}
             onBack={() => setSelectedGoalId(null)}
-            onTimerClick={handleTimerPlaceholder}
           />
         ) : (
           <>
             <GoalList
               goals={goals}
               selectedGoalId={selectedGoalId}
-              onSelectGoal={setSelectedGoalId}
+              onSelectGoal={handleSelectGoalFromList}
               headerSlot={
-                <form
-                  onSubmit={handleCreateGoal}
-                  className="rounded-3xl border border-slate-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/50"
-                >
-                  <label
-                    htmlFor="new-goal"
-                    className="text-sm font-semibold text-slate-800 dark:text-slate-200"
-                  >
-                    New goal
-                  </label>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Saved in React state only — replace with API persist + AI
-                    breakdown later.
-                  </p>
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                    <input
-                      id="new-goal"
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      placeholder="e.g. Ship ConstAI MVP"
-                      className="min-h-11 flex-1 rounded-2xl border border-slate-200 bg-white/90 px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-100 dark:placeholder:text-slate-500"
-                    />
-                    <button
-                      type="submit"
-                      className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white shadow-lg shadow-violet-500/10 transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
-                    >
-                      Create
-                    </button>
-                  </div>
-                </form>
+                <CreateGoalWizard onComplete={handleIntakeComplete} />
               }
             />
 
             {goals.length === 0 ? (
               <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-                No goals yet — name one above. Opening a goal reveals its
-                dashboard, milestones, and tasks.
+                Start with a name, then add context — your goal opens with a
+                default schedule until Gemini shapes it.
               </p>
             ) : null}
 
@@ -226,8 +225,19 @@ export default function App() {
         onConfirm={handleConfirmDelete}
       />
 
+      {timerSession ? (
+        <FocusTimerOverlay
+          key={timerSession.sessionId}
+          goalTitle={timerSession.goalTitle}
+          taskTitle={timerSession.taskTitle}
+          taskId={timerSession.taskId}
+          onClose={() => setTimerSession(null)}
+          onSessionComplete={handleTimerSessionComplete}
+        />
+      ) : null}
+
       <footer className="border-t border-slate-200/80 py-8 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
-        ConstAI skeleton — AI coach + sync hooks marked in code comments.
+        ConstAI — wire <code className="text-sky-600 dark:text-sky-400">intakeForGemini</code> when the API is ready.
       </footer>
     </div>
   )

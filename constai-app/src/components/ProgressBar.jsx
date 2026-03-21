@@ -4,10 +4,10 @@
  */
 const toneBar = {
   strict:
-    'from-rose-500 via-amber-400 to-cyan-400 shadow-[0_0_24px_rgba(244,63,94,0.25)]',
-  calm: 'from-teal-400 via-emerald-300 to-sky-300 shadow-[0_0_24px_rgba(45,212,191,0.2)]',
+    'from-sky-700 via-blue-600 to-cyan-400 shadow-[0_0_28px_rgba(14,165,233,0.35)]',
+  calm: 'from-cyan-400 via-sky-400 to-blue-600 shadow-[0_0_24px_rgba(34,211,238,0.28)]',
   neutral:
-    'from-violet-500 via-indigo-400 to-fuchsia-400 shadow-[0_0_24px_rgba(139,92,246,0.2)]',
+    'from-blue-600 via-sky-500 to-cyan-400 shadow-[0_0_24px_rgba(37,99,235,0.28)]',
 }
 
 export default function ProgressBar({

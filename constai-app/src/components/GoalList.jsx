@@ -23,6 +23,7 @@ export default function GoalList({
               title={g.title}
               taskTotal={g.tasks.length}
               taskDone={done}
+              deadline={g.deadline}
               selected={g.id === selectedGoalId}
               onClick={() => onSelectGoal(g.id)}
             />

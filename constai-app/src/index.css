@@ -12,6 +12,12 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   margin: 0;
   min-height: 100svh;
@@ -28,16 +34,91 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* Subtle grid for futuristic depth — purely decorative. */
+/* Entry / emphasis motion (respect reduced motion). */
+@keyframes constai-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes constai-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes constai-pulse-aurora {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08) translate(2%, -2%);
+  }
+}
+
+@keyframes constai-celebrate-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.constai-animate-in {
+  animation: constai-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.constai-scale-in {
+  animation: constai-scale-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.constai-celebrate {
+  animation: constai-celebrate-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.constai-timer-aurora {
+  animation: constai-pulse-aurora 12s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .constai-animate-in,
+  .constai-scale-in,
+  .constai-celebrate,
+  .constai-timer-aurora {
+    animation: none !important;
+  }
+}
+
+/* Subtle depth — blue-forward accents. */
 .constai-noise {
   background-image: radial-gradient(
       ellipse 80% 50% at 50% -20%,
-      rgba(120, 119, 198, 0.15),
+      rgba(56, 189, 248, 0.14),
       transparent
     ),
     radial-gradient(
       ellipse 60% 40% at 100% 0%,
-      rgba(56, 189, 248, 0.08),
+      rgba(14, 165, 233, 0.1),
       transparent
     );
 }
@@ -46,12 +127,12 @@ body {
   .constai-noise {
     background-image: radial-gradient(
         ellipse 80% 50% at 50% -20%,
-        rgba(139, 92, 246, 0.12),
+        rgba(14, 165, 233, 0.12),
         transparent
       ),
       radial-gradient(
         ellipse 60% 40% at 100% 0%,
-        rgba(34, 211, 238, 0.06),
+        rgba(34, 211, 238, 0.08),
         transparent
       );
   }

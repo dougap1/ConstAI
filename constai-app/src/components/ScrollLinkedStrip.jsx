@@ -61,7 +61,7 @@ export default function ScrollLinkedStrip({ items = [] }) {
                 key={item.id ?? i}
                 className="w-[min(100vw-3rem,320px)] shrink-0 rounded-3xl border border-slate-200/80 bg-white/70 p-6 shadow-sm backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/50 sm:w-80"
               >
-                <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
                   {item.kicker}
                 </p>
                 <h3 className="mt-2 font-display text-xl font-semibold text-slate-900 dark:text-white">
