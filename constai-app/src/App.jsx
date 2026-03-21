@@ -10,7 +10,11 @@ import FocusTimerOverlay from './components/FocusTimerOverlay'
 import GoalCelebrationModal from './components/GoalCelebrationModal'
 import TaskCompletedToast from './components/TaskCompletedToast'
 import { DAILY_QUOTES } from './data/seedGoal'
-import { createGoalFromIntake } from './lib/createGoalModel'
+import { buildIntakeForModel, createGoalFromIntake } from './lib/createGoalModel'
+import {
+  generateGoalPlanFromGemini,
+  readGeminiApiKeyFromEnv,
+} from './lib/geminiGoalPlan'
 import { getTaskAllottedMinutes } from './lib/schedule'
 import { recordGoalRemoveReflection } from './lib/analyticsStub'
 
@@ -25,7 +29,7 @@ const FLOW_CARDS = [
     id: 'f2',
     kicker: 'Signal',
     title: 'Milestones over noise',
-    body: 'Deadlines drive daily or weekly milestone shapes — goal alignment tracks timer-completed work.',
+    body: 'Gemini shapes daily or weekly milestones from your deadline — alignment still comes from timer-completed work.',
   },
   {
     id: 'f3',
@@ -53,6 +57,7 @@ export default function App() {
   const timerSessionRef = useRef(null)
   const [celebration, setCelebration] = useState(null)
   const [taskToast, setTaskToast] = useState(null)
+  const [creatingGoal, setCreatingGoal] = useState(false)
 
   useEffect(() => {
     timerSessionRef.current = timerSession
@@ -87,11 +92,26 @@ export default function App() {
     setSelectedGoalId(goalId)
   }
 
-  function handleIntakeComplete(intake) {
-    const goal = createGoalFromIntake(intake)
-    setGoals((prev) => [...prev, goal])
-    setTone(goal.toneStyle)
-    setSelectedGoalId(goal.id)
+  async function handleIntakeComplete(intake) {
+    setCreatingGoal(true)
+    try {
+      let geminiRaw = null
+      const apiKey = readGeminiApiKeyFromEnv()
+      if (apiKey) {
+        try {
+          const payload = buildIntakeForModel(intake)
+          geminiRaw = await generateGoalPlanFromGemini(payload, apiKey)
+        } catch (err) {
+          console.error('Gemini goal plan failed, using local fallback:', err)
+        }
+      }
+      const goal = createGoalFromIntake(intake, geminiRaw)
+      setGoals((prev) => [...prev, goal])
+      setTone(goal.toneStyle)
+      setSelectedGoalId(goal.id)
+    } finally {
+      setCreatingGoal(false)
+    }
   }
 
   function handleRequestRemoveGoal(goalId, goalTitle) {
@@ -199,14 +219,20 @@ export default function App() {
               onSelectGoal={handleSelectGoalFromList}
               onRequestRemoveGoal={handleRequestRemoveGoal}
               headerSlot={
-                <CreateGoalWizard onComplete={handleIntakeComplete} />
+                <CreateGoalWizard
+                  onComplete={handleIntakeComplete}
+                  submitting={creatingGoal}
+                />
               }
             />
 
             {goals.length === 0 ? (
               <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-                Start with a name, then add context — your goal opens with a
-                default schedule until Gemini shapes it.
+                Start with a name, then add context — ConstAI calls Gemini when{' '}
+                <code className="text-sky-700 dark:text-sky-300">
+                  VITE_GEMINI_API_KEY
+                </code>{' '}
+                is set; otherwise you get the local template plan.
               </p>
             ) : null}
 
@@ -247,7 +273,10 @@ export default function App() {
       />
 
       <footer className="border-t border-slate-200/80 py-8 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
-        ConstAI — wire <code className="text-sky-600 dark:text-sky-400">intakeForGemini</code> when the API is ready.
+        ConstAI — set{' '}
+        <code className="text-sky-600 dark:text-sky-400">VITE_GEMINI_API_KEY</code>{' '}
+        in <code className="text-sky-600 dark:text-sky-400">.env.local</code> for
+        AI tasks &amp; milestones (structured JSON via Gemini).
       </footer>
     </div>
   )

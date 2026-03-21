@@ -14,7 +14,11 @@ const initialDetails = {
  * Step 1: name · Step 2: intake fields. Submits assembled goal via parent.
  * Gemini hook: parent persists `intakeForGemini` from createGoalFromIntake.
  */
-export default function CreateGoalWizard({ onComplete, onCancel }) {
+export default function CreateGoalWizard({
+  onComplete,
+  onCancel,
+  submitting = false,
+}) {
   const [step, setStep] = useState(1)
   const [title, setTitle] = useState('')
   const [details, setDetails] = useState(initialDetails)
@@ -25,8 +29,9 @@ export default function CreateGoalWizard({ onComplete, onCancel }) {
     setStep(2)
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    if (submitting) return
     const d = details
     if (
       !d.whyItMatters.trim() ||
@@ -37,7 +42,7 @@ export default function CreateGoalWizard({ onComplete, onCancel }) {
     ) {
       return
     }
-    onComplete({
+    const payload = {
       title: title.trim(),
       whyItMatters: d.whyItMatters,
       focusArea: d.focusArea,
@@ -45,7 +50,13 @@ export default function CreateGoalWizard({ onComplete, onCancel }) {
       weekdayAvailability: d.weekdayAvailability,
       weekendAvailability: d.weekendAvailability,
       toneStyle: d.toneStyle,
-    })
+    }
+    try {
+      await onComplete?.(payload)
+    } catch (err) {
+      console.error(err)
+      return
+    }
     setTitle('')
     setDetails(initialDetails)
     setStep(1)
@@ -81,7 +92,8 @@ export default function CreateGoalWizard({ onComplete, onCancel }) {
               Goal name
             </label>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Next, you’ll add context for ConstAI (and later Gemini).
+              Next, you’ll add context — Gemini turns it into tasks and milestones
+              when your API key is configured.
             </p>
             <input
               id="goal-title"
@@ -223,22 +235,25 @@ export default function CreateGoalWizard({ onComplete, onCancel }) {
           </div>
 
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            A default schedule is generated from your text (12h with AM/PM or 24h).
-            The dashboard shows both formats for every window. Gemini will refine
-            this later — see <code className="text-sky-700 dark:text-sky-300">intakeForGemini</code> on the goal object.
+            A default schedule is parsed from your availability text (12h with AM/PM
+            or 24h). The dashboard shows both formats. After you submit, Gemini
+            returns structured JSON for tasks and milestones (daily if your
+            deadline is soon, weekly if it is farther out).
           </p>
 
           <div className="flex flex-wrap gap-2 pt-1">
             <button
               type="submit"
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-semibold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98] sm:flex-none"
+              disabled={submitting}
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-semibold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98] enabled:active:scale-[0.98] disabled:cursor-wait disabled:opacity-70 sm:flex-none"
             >
-              Add goal
+              {submitting ? 'Generating plan…' : 'Add goal'}
             </button>
             <button
               type="button"
+              disabled={submitting}
               onClick={() => setStep(1)}
-              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 px-5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 px-5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800/80"
             >
               Back
             </button>

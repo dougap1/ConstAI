@@ -209,7 +209,17 @@ export default function GoalDashboard({
         <p className="text-[10px] font-bold uppercase tracking-widest text-sky-700/90 dark:text-sky-300/90">
           Why it matters
         </p>
-        <p className="mt-2">{goal.whyItMatters ?? goal.motivationalNote}</p>
+        <p className="mt-2">{goal.whyItMatters}</p>
+        {goal.planSource === 'gemini' && goal.motivationalNote ? (
+          <>
+            <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-sky-700/90 dark:text-sky-300/90">
+              From your plan
+            </p>
+            <p className="mt-2 text-xs leading-relaxed opacity-95">
+              {goal.motivationalNote}
+            </p>
+          </>
+        ) : null}
       </aside>
 
       <SchedulePreview schedule={goal.schedule} />

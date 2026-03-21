@@ -1,6 +1,5 @@
 /**
- * Dummy seed data for new goals. Replace with API response or AI-generated
- * milestones/tasks when backend / agent integration exists.
+ * Local fallback tasks / copy when Gemini is off or returns unusable JSON.
  */
 export function dummyMilestones() {
   return [
