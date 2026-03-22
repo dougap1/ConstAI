@@ -5,17 +5,17 @@
 export default function TaskCompletedToast({ message, onDismiss }) {
   if (!message) return null
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[90] flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-x-0 top-6 z-[90] flex justify-center px-4">
       <div
-        className="constai-toast-in pointer-events-auto w-full max-w-[380px] rounded-2xl border border-sky-400/40 bg-slate-900/95 px-4 py-3 text-sm text-white shadow-xl shadow-sky-900/30 backdrop-blur-md dark:border-sky-500/30 dark:bg-slate-950/95"
+        className="constai-toast-in pointer-events-auto w-full max-w-[380px] rounded-2xl border border-sky-400/40 bg-slate-900/95 px-4 py-4 text-sm text-white shadow-xl shadow-sky-900/30 backdrop-blur-md dark:border-sky-500/30 dark:bg-slate-950/95"
         role="status"
       >
-        <div className="flex items-start justify-between gap-3">
-          <p className="flex-1 text-center leading-snug sm:text-left">{message}</p>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="max-w-full leading-snug">{message}</p>
           <button
             type="button"
             onClick={onDismiss}
-            className="shrink-0 rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-white/10 hover:text-white"
+            className="min-w-[5.5rem] rounded-xl bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow-md shadow-sky-900/30 transition hover:bg-sky-500"
           >
             OK
           </button>
