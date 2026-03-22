@@ -1,19 +1,12 @@
 /**
- * ProgressBar — visual completion for task lists.
- * AI hook: pass `value` from agent-computed readiness or predicted completion.
+ * ProgressBar — task completion for a goal.
  */
-const toneBar = {
-  strict:
-    'from-sky-700 via-blue-600 to-cyan-400 shadow-[0_0_28px_rgba(14,165,233,0.35)]',
-  calm: 'from-cyan-400 via-sky-400 to-blue-600 shadow-[0_0_24px_rgba(34,211,238,0.28)]',
-  neutral:
-    'from-blue-600 via-sky-500 to-cyan-400 shadow-[0_0_24px_rgba(37,99,235,0.28)]',
-}
+const barClass =
+  'from-blue-600 via-sky-500 to-cyan-400 shadow-[0_0_24px_rgba(37,99,235,0.28)]'
 
 export default function ProgressBar({
   value,
   label = 'Progress',
-  tone = 'neutral',
   className = '',
 }) {
   const clamped = Math.min(100, Math.max(0, value))
@@ -34,7 +27,7 @@ export default function ProgressBar({
         aria-label={label}
       >
         <div
-          className={`h-full rounded-full bg-linear-to-r transition-[width] duration-500 ease-out ${toneBar[tone] ?? toneBar.neutral}`}
+          className={`h-full rounded-full bg-linear-to-r transition-[width] duration-500 ease-out ${barClass}`}
           style={{ width: `${clamped}%` }}
         />
       </div>

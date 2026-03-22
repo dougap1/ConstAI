@@ -41,6 +41,9 @@ function mapDisplayWindows(windows) {
 
 /** Sum of weekday window lengths — proxy for “available minutes / day”. */
 export function totalWeekdayMinutesFromSchedule(schedule) {
+  if (schedule?.version === 'minutes_v1') {
+    return Math.max(0, Number(schedule.weekdayFreeMinutes) || 0)
+  }
   const windows = schedule?.weekdays?.windows
   if (!windows?.length) {
     return DEFAULT_WEEKDAY_WINDOWS.reduce(
@@ -49,6 +52,26 @@ export function totalWeekdayMinutesFromSchedule(schedule) {
     )
   }
   return windows.reduce((s, w) => s + parseRangeToMinutes(w), 0)
+}
+
+/** Longest single window on weekdays or weekends — caps recommended session length. */
+export function getMaxWindowMinutesFromSchedule(schedule) {
+  if (schedule?.version === 'minutes_v1') {
+    const wd = Number(schedule.weekdayFreeMinutes) || 0
+    const we = Number(schedule.weekendFreeMinutes) || 0
+    return Math.max(15, Math.max(wd, we))
+  }
+  const wd = schedule?.weekdays?.windows?.length
+    ? schedule.weekdays.windows
+    : DEFAULT_WEEKDAY_WINDOWS
+  const we = schedule?.weekends?.windows?.length
+    ? schedule.weekends.windows
+    : DEFAULT_WEEKEND_WINDOWS
+  let maxM = 0
+  for (const w of [...wd, ...we]) {
+    maxM = Math.max(maxM, parseRangeToMinutes(w))
+  }
+  return Math.max(maxM, 30)
 }
 
 export function computeAllottedMinutesPerTask(schedule, taskCount) {
@@ -60,12 +83,31 @@ export function computeAllottedMinutesPerTask(schedule, taskCount) {
 
 export function getTaskAllottedMinutes(task, goal) {
   if (task?.allottedMinutes != null) return task.allottedMinutes
+  if (task?.durationMinutes != null) return task.durationMinutes
+  if (goal?.cadence?.sessionLengthMinutes != null)
+    return goal.cadence.sessionLengthMinutes
   if (goal?.schedule)
     return computeAllottedMinutesPerTask(
       goal.schedule,
       goal.tasks?.length ?? 1,
     )
   return 25
+}
+
+/** Free-time budget per day type (minutes). Used for Gemini + caps. */
+export function buildScheduleFromFreeMinutes(weekdayFreeMinutes, weekendFreeMinutes) {
+  const wd = clampMinutes(weekdayFreeMinutes)
+  const we = clampMinutes(weekendFreeMinutes)
+  return {
+    version: 'minutes_v1',
+    weekdayFreeMinutes: wd,
+    weekendFreeMinutes: we,
+  }
+}
+
+function clampMinutes(n) {
+  const x = Math.round(Number(n) || 0)
+  return Math.min(24 * 60, Math.max(0, x))
 }
 
 export function buildDefaultSchedule({

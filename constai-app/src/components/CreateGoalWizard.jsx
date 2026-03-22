@@ -1,19 +1,13 @@
 import { useState } from 'react'
-import TonePicker from './TonePicker'
 
 const initialDetails = {
   whyItMatters: '',
   focusArea: '',
   deadline: '',
-  weekdayAvailability: '',
-  weekendAvailability: '',
-  toneStyle: 'neutral',
+  weekdayFreeMinutes: '60',
+  weekendFreeMinutes: '120',
 }
 
-/**
- * Step 1: name · Step 2: intake fields. Submits assembled goal via parent.
- * Gemini hook: parent persists `intakeForGemini` from createGoalFromIntake.
- */
 export default function CreateGoalWizard({
   onComplete,
   onCancel,
@@ -33,12 +27,16 @@ export default function CreateGoalWizard({
     e.preventDefault()
     if (submitting) return
     const d = details
+    const wd = Number(d.weekdayFreeMinutes)
+    const we = Number(d.weekendFreeMinutes)
     if (
       !d.whyItMatters.trim() ||
       !d.focusArea.trim() ||
       !d.deadline ||
-      !d.weekdayAvailability.trim() ||
-      !d.weekendAvailability.trim()
+      Number.isNaN(wd) ||
+      wd < 15 ||
+      Number.isNaN(we) ||
+      we < 0
     ) {
       return
     }
@@ -47,9 +45,8 @@ export default function CreateGoalWizard({
       whyItMatters: d.whyItMatters,
       focusArea: d.focusArea,
       deadline: d.deadline,
-      weekdayAvailability: d.weekdayAvailability,
-      weekendAvailability: d.weekendAvailability,
-      toneStyle: d.toneStyle,
+      weekdayFreeMinutes: wd,
+      weekendFreeMinutes: we,
     }
     try {
       await onComplete?.(payload)
@@ -67,11 +64,8 @@ export default function CreateGoalWizard({
 
   return (
     <div className="constai-animate-in rounded-3xl border border-slate-200/80 bg-white/70 p-5 shadow-sm backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/50">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600 dark:text-sky-400">
-          New goal · step {step} of 2
-        </p>
-        {step === 2 ? (
+      {step === 2 ? (
+        <div className="mb-3 flex justify-end">
           <button
             type="button"
             onClick={() => setStep(1)}
@@ -79,8 +73,8 @@ export default function CreateGoalWizard({
           >
             Edit name
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {step === 1 ? (
         <form onSubmit={handleContinue} className="space-y-4">
@@ -91,15 +85,11 @@ export default function CreateGoalWizard({
             >
               Goal name
             </label>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Next, you’ll add context — Gemini turns it into tasks and milestones
-              when your API key is configured.
-            </p>
             <input
               id="goal-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Ship ConstAI MVP"
+              placeholder="e.g. Run a 5K"
               className={fieldClass}
               autoComplete="off"
             />
@@ -107,9 +97,9 @@ export default function CreateGoalWizard({
           <div className="flex flex-wrap gap-2">
             <button
               type="submit"
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-semibold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98] sm:flex-none"
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl bg-emerald-700 px-6 text-sm font-semibold text-white shadow-lg shadow-emerald-900/25 transition hover:bg-emerald-600 active:scale-[0.98] dark:bg-emerald-800 dark:shadow-emerald-950/40 dark:hover:bg-emerald-700 sm:flex-none"
             >
-              Continue
+              Proceed
             </button>
             {onCancel ? (
               <button
@@ -124,32 +114,29 @@ export default function CreateGoalWizard({
         </form>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <p className="rounded-2xl border border-sky-200/60 bg-sky-50/50 px-4 py-3 text-sm text-slate-700 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-slate-300">
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {title.trim()}
-            </span>
+          <p className="rounded-2xl border border-sky-200/60 bg-sky-50/50 px-4 py-3 text-sm font-semibold text-slate-900 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-white">
+            {title.trim()}
           </p>
 
           <div>
             <label htmlFor="why" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              Why this goal matters
+              Why it matters
             </label>
             <textarea
               id="why"
               required
-              rows={3}
+              rows={2}
               value={details.whyItMatters}
               onChange={(e) =>
                 setDetails((s) => ({ ...s, whyItMatters: e.target.value }))
               }
-              placeholder="What changes when you finish this?"
               className={fieldClass}
             />
           </div>
 
           <div>
             <label htmlFor="focus" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              Specific focus area
+              Focus area
             </label>
             <input
               id="focus"
@@ -158,7 +145,6 @@ export default function CreateGoalWizard({
               onChange={(e) =>
                 setDetails((s) => ({ ...s, focusArea: e.target.value }))
               }
-              placeholder="e.g. onboarding flow + first paying user"
               className={fieldClass}
             />
           </div>
@@ -181,73 +167,59 @@ export default function CreateGoalWizard({
 
           <div>
             <label
-              htmlFor="weekday-avail"
+              htmlFor="wd-min"
               className="text-sm font-semibold text-slate-800 dark:text-slate-200"
             >
-              Weekday availability
+              Weekday — free minutes / day
             </label>
             <input
-              id="weekday-avail"
+              id="wd-min"
+              type="number"
+              min={15}
+              max={1440}
               required
-              value={details.weekdayAvailability}
+              value={details.weekdayFreeMinutes}
               onChange={(e) =>
                 setDetails((s) => ({
                   ...s,
-                  weekdayAvailability: e.target.value,
+                  weekdayFreeMinutes: e.target.value,
                 }))
               }
-              placeholder="e.g. 7:00 AM–9:00 AM, 5:30 PM–8:00 PM or 17:30–20:00"
               className={fieldClass}
             />
           </div>
 
           <div>
             <label
-              htmlFor="weekend-avail"
+              htmlFor="we-min"
               className="text-sm font-semibold text-slate-800 dark:text-slate-200"
             >
-              Weekend availability
+              Weekend — free minutes / day
             </label>
             <input
-              id="weekend-avail"
+              id="we-min"
+              type="number"
+              min={0}
+              max={1440}
               required
-              value={details.weekendAvailability}
+              value={details.weekendFreeMinutes}
               onChange={(e) =>
                 setDetails((s) => ({
                   ...s,
-                  weekendAvailability: e.target.value,
+                  weekendFreeMinutes: e.target.value,
                 }))
               }
-              placeholder="e.g. 10:00 AM–2:00 PM or 10:00–14:00"
               className={fieldClass}
             />
           </div>
-
-          <div className="rounded-2xl border border-slate-200/80 bg-white/40 p-4 dark:border-slate-700/80 dark:bg-slate-950/30">
-            <TonePicker
-              name="goal-tone-style"
-              legend="Tone style"
-              value={details.toneStyle}
-              onChange={(id) =>
-                setDetails((s) => ({ ...s, toneStyle: id }))
-              }
-            />
-          </div>
-
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            A default schedule is parsed from your availability text (12h with AM/PM
-            or 24h). The dashboard shows both formats. After you submit, Gemini
-            returns structured JSON for tasks and milestones (daily if your
-            deadline is soon, weekly if it is farther out).
-          </p>
 
           <div className="flex flex-wrap gap-2 pt-1">
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-semibold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98] enabled:active:scale-[0.98] disabled:cursor-wait disabled:opacity-70 sm:flex-none"
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-semibold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 disabled:cursor-wait disabled:opacity-70 sm:flex-none"
             >
-              {submitting ? 'Generating plan…' : 'Add goal'}
+              {submitting ? '…' : 'Add goal'}
             </button>
             <button
               type="button"

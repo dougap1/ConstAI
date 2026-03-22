@@ -1,20 +1,11 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
+import { buildPlannerWeeks, todayDateKey } from './calendar'
 import { getDaysUntilDeadline } from './milestones'
 
-/** Prefer a model your AI Studio key can access; override with VITE_GEMINI_MODEL. */
 const DEFAULT_MODEL = 'gemini-2.5-flash'
 
 function goalPlanResponseSchema() {
-  const dailyItemSchema = {
-    type: SchemaType.OBJECT,
-    properties: {
-      dayLabel: { type: SchemaType.STRING },
-      label: { type: SchemaType.STRING },
-    },
-    required: ['dayLabel', 'label'],
-  }
-
-  const weekDailySchema = {
+  const beatSchema = {
     type: SchemaType.OBJECT,
     properties: {
       label: { type: SchemaType.STRING },
@@ -22,82 +13,116 @@ function goalPlanResponseSchema() {
     required: ['label'],
   }
 
-  const weekSchema = {
+  const milestoneSchema = {
     type: SchemaType.OBJECT,
     properties: {
-      week: { type: SchemaType.STRING },
-      label: { type: SchemaType.STRING },
-      daily: { type: SchemaType.ARRAY, items: weekDailySchema },
+      plannerWeekIndex: {
+        type: SchemaType.INTEGER,
+        description:
+          '0-based index of the planner week (Week 1 = 0). Optional if order matches weeks.',
+      },
+      weekLabel: { type: SchemaType.STRING },
+      summary: { type: SchemaType.STRING },
+      beats: { type: SchemaType.ARRAY, items: beatSchema },
     },
-    required: ['week', 'label', 'daily'],
+    required: ['weekLabel', 'summary', 'beats'],
   }
 
-  const milestonePlanSchema = {
+  const taskSchema = {
     type: SchemaType.OBJECT,
     properties: {
-      mode: {
-        type: SchemaType.STRING,
-        format: 'enum',
-        enum: ['daily', 'weekly_nested'],
-      },
-      sectionTitle: { type: SchemaType.STRING },
-      subtitle: { type: SchemaType.STRING },
-      items: { type: SchemaType.ARRAY, items: dailyItemSchema },
-      weeks: { type: SchemaType.ARRAY, items: weekSchema },
+      title: { type: SchemaType.STRING },
+      week: { type: SchemaType.STRING },
+      sessionLabel: { type: SchemaType.STRING },
+      durationMinutes: { type: SchemaType.INTEGER },
+      scheduledDate: { type: SchemaType.STRING },
+      tip: { type: SchemaType.STRING },
+      dayLabel: { type: SchemaType.STRING },
+      completed: { type: SchemaType.BOOLEAN },
     },
-    required: ['mode', 'sectionTitle', 'subtitle', 'items', 'weeks'],
+    required: ['title', 'week', 'sessionLabel', 'durationMinutes', 'scheduledDate'],
   }
 
   return {
     type: SchemaType.OBJECT,
     properties: {
-      motivationalNote: { type: SchemaType.STRING },
-      tasks: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            title: { type: SchemaType.STRING },
-          },
-          required: ['title'],
-        },
+      scheduleType: {
+        type: SchemaType.STRING,
+        format: 'enum',
+        enum: [
+          'daily',
+          'weekdays_only',
+          'weekends_only',
+          'several_days_per_week',
+          'milestone_based',
+          'flex_blocks',
+          'mixed',
+          'custom',
+        ],
       },
-      milestonePlan: milestonePlanSchema,
+      sessionsPerWeek: { type: SchemaType.INTEGER },
+      estimatedWeeks: { type: SchemaType.INTEGER },
+      sessionLengthMinutes: { type: SchemaType.INTEGER },
+      assignedWeekdayNames: {
+        type: SchemaType.ARRAY,
+        items: { type: SchemaType.STRING },
+      },
+      recommendedRestDays: {
+        type: SchemaType.ARRAY,
+        items: { type: SchemaType.STRING },
+      },
+      reasoningSummary: { type: SchemaType.STRING },
+      motivationalNote: { type: SchemaType.STRING },
+      milestones: { type: SchemaType.ARRAY, items: milestoneSchema },
+      tasks: { type: SchemaType.ARRAY, items: taskSchema },
     },
-    required: ['motivationalNote', 'tasks', 'milestonePlan'],
+    required: [
+      'scheduleType',
+      'sessionsPerWeek',
+      'estimatedWeeks',
+      'sessionLengthMinutes',
+      'assignedWeekdayNames',
+      'recommendedRestDays',
+      'reasoningSummary',
+      'motivationalNote',
+      'milestones',
+      'tasks',
+    ],
   }
 }
 
 function buildSystemInstruction() {
-  return `You are ConstAI's planning engine. The user completed a goal intake form. Their answers are provided as JSON.
+  return `You are ConstAI's planning engine.
+
+Input JSON includes: title, motivation (whyItMatters), focus, deadline, weekdayFreeMinutes, weekendFreeMinutes (per-day budget), daysUntilDeadline, plannerWeekCount (number of calendar weeks from today through the deadline in the app), todayDate, and schedule summary.
+
+Everything you output must move the user toward finishing their specific goal by the deadline. Tasks and milestones must be concrete, goal-specific, and sequenced so completing them implies real progress (not generic filler).
 
 Rules:
-- Produce actionable, specific tasks (not generic platitudes). Tie tasks to their title, focus area, and deadline.
-- motivationalNote: 1–3 sentences, warm and practical, reflecting their "why it matters" and tone style.
-- tasks: between 4 and 8 items. Short imperative titles (under ~80 characters).
-- milestonePlan.mode MUST be:
-  - "daily" when daysUntilDeadline <= 14 (short horizon — day-by-day milestones).
-  - "weekly_nested" when daysUntilDeadline > 14 (longer horizon — week themes plus nested daily beats).
-- For "daily" mode: fill milestonePlan.items with one entry per milestone (3–14 items). Use dayLabel like "Day 1", "Day 2", … and label as a concrete outcome for that day. Set milestonePlan.weeks to [].
-- For "weekly_nested" mode: fill milestonePlan.weeks with one object per week. The number of weeks should match roughly ceil(daysUntilDeadline / 7), capped at 12 and at least 2. Each week needs week (e.g. "Week 1"), label (week theme), and daily (2–5 nested daily milestones). Set milestonePlan.items to [].
-- sectionTitle and subtitle should match the chosen mode and their tone style (strict = more deadline-focused; calm = gentler; neutral = balanced).
-- Output must follow the response schema exactly — no markdown, no code fences, no extra keys.`
+1) Infer goal type (gym/fitness, LeetCode/study, portfolio project, habit, exam prep, etc.) and pick a REALISTIC weekly pattern.
+2) assignedWeekdayNames: array of 3-letter English weekdays (Mon,Tue,Wed,Thu,Fri,Sat,Sun) the user should work on THIS goal. Examples: gym might use 3–4 consecutive days + rest (e.g. Mon,Tue,Wed,Fri); LeetCode might use Mon–Fri only; heavy weekend workers might use Sat,Sun with more minutes those days.
+3) sessionsPerWeek: 1–7. Do NOT assume 5 or 7 unless the goal truly needs it.
+4) sessionLengthMinutes must be ≤ min(weekdayFreeMinutes, weekendFreeMinutes) when both apply, or ≤ the relevant day's budget. You may bias longer sessions on weekends if weekdayFreeMinutes is small — say so in reasoningSummary.
+5) Each task MUST include scheduledDate as YYYY-MM-DD within the range from todayDate through the deadline (inclusive). Spread tasks across assignedWeekdayNames. durationMinutes per task should share the available time sensibly across those work days. Task titles must be actionable steps toward the stated goal; tips must help execute that step.
+6) Each task includes tip: one short practical sentence on how to execute (technique, warmup, focus trick).
+7) milestones: You MUST output exactly plannerWeekCount milestones (same count as weeks in the schedule). Index i (0-based) corresponds to Week i+1 of the planner: milestone 0 = first week from today, etc. Each milestone has a clear weekly summary and 2–5 beats that describe outcomes for that week. Beats should ladder toward the final goal. You may set plannerWeekIndex to the 0-based week index when helpful; otherwise keep milestones in week order. Tasks dated in a given planner week should support that week's milestone (same week index).
+8) reasoningSummary: why this weekday pattern and time split fit the goal and their minutes budget.
+9) Output only JSON matching the schema.`
 }
 
-/**
- * Calls Gemini with structured JSON output. API key is read from the browser bundle (VITE_*); use a backend proxy for production.
- */
 export async function generateGoalPlanFromGemini(intakeForGemini, apiKey, options = {}) {
   const { signal, model = import.meta.env.VITE_GEMINI_MODEL?.trim() || DEFAULT_MODEL } =
     options
 
   const daysUntil = getDaysUntilDeadline(intakeForGemini.deadline)
+  const plannerWeeks = buildPlannerWeeks(intakeForGemini.deadline)
+  const plannerWeekCount = plannerWeeks.length > 0 ? plannerWeeks.length : 1
 
   const genAI = new GoogleGenerativeAI(apiKey)
   const genModel = genAI.getGenerativeModel({
     model,
     generationConfig: {
-      temperature: 0.65,
+      temperature: 0.5,
       maxOutputTokens: 8192,
       responseMimeType: 'application/json',
       responseSchema: goalPlanResponseSchema(),
@@ -108,7 +133,15 @@ export async function generateGoalPlanFromGemini(intakeForGemini, apiKey, option
   const userPayload = {
     ...intakeForGemini,
     daysUntilDeadline: daysUntil,
-    milestoneModeHint: daysUntil > 14 ? 'weekly_nested' : 'daily',
+    todayDate: todayDateKey(),
+    plannerWeekCount,
+    plannerWeekLabels: plannerWeeks.map((w, i) => ({
+      weekNumber: i + 1,
+      label: w.label,
+      dayCount: w.dayCount,
+      startDate: w.days[0]?.dateKey,
+      endDate: w.days[w.days.length - 1]?.dateKey,
+    })),
   }
 
   let result

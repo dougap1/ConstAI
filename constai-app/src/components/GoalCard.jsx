@@ -49,7 +49,7 @@ export default function GoalCard({
             {title}
           </h3>
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            {taskDone}/{taskTotal} tasks complete (via timer)
+            {taskDone}/{taskTotal} tasks complete
             {deadlineLabel ? (
               <span className="mt-1 block text-sky-600/90 dark:text-sky-400/90">
                 Due {deadlineLabel}
