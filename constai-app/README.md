@@ -16,6 +16,7 @@ A React + Vite web app that helps you define goals, capture **weekday/weekend fr
 | **Timers** | Start a session from the day modal; completion can mark the task done. |
 | **Demo account** | Header avatar opens a **login/register demo** modal: accepts input only in memory—**nothing is stored or sent** (refresh clears it). |
 | **Debug** | If Gemini fails or JSON fails validation, a **debug panel** can show the error and a response preview (no key values from env are logged by this UI). |
+| **Plan summary** | **Overall Plan Summary** shows cadence stats, schedule type, **work days** (weekday names), and **reasoning** text only—no extra bullet list under it. |
 
 ---
 
@@ -78,6 +79,8 @@ This app often lives in a monorepo folder named `constai-app/` with **git root o
 constai-app/
 ├── index.html
 ├── package.json
+├── public/
+│   └── favicon.svg             # Tab icon (blue lightning)
 ├── vite.config.js
 ├── src/
 │   ├── main.jsx
@@ -115,6 +118,26 @@ constai-app/
 - **Output:** Normalized in `planNormalize.js` (cadence, `planMilestones`, tasks with `scheduledDate`, optional `tip`). See `geminiGoalPlan.js` for the schema and system instructions.
 
 Quota or billing errors from Google appear in the UI when the request fails; the app still creates a goal using the **fallback** plan when possible.
+
+**Production:** Add the same **`VITE_*`** variables in your host’s dashboard (e.g. **Vercel → Project → Settings → Environment Variables**) for **Production**, then **redeploy**. Vite inlines them at **build time**. If the key works locally but not on the live site, check Vercel envs and any **API key restrictions** in Google AI Studio (domain allowlists).
+
+**Security:** `VITE_GEMINI_API_KEY` is embedded in client JS. Treat it as public; use restricted keys and quotas, or add a server-side proxy for sensitive deployments.
+
+---
+
+## Deploying (e.g. Vercel)
+
+1. Import the GitHub repo; set **Root Directory** to `constai-app` if the app is not at the repo root.
+2. **Framework preset:** **Vite** (or **Other** with build `npm run build`, output **`dist`**).
+3. Add **`VITE_GEMINI_API_KEY`** (and optional **`VITE_GEMINI_MODEL`**) under Environment Variables for **Production** (and Preview if needed).
+4. Deploy; **custom domains** are added under **Settings → Domains** with DNS at your registrar.
+
+---
+
+## Branding & static assets
+
+- **Favicon:** `public/favicon.svg` — blue lightning bolt on a dark blue tile; linked from `index.html` as `/favicon.svg`.
+- In-app title / copy use **CONST AI** styling in the header.
 
 ---
 

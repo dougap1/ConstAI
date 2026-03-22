@@ -12,7 +12,7 @@ This file is a **lightweight supplement**: architecture touchpoints and historic
 |-------|------|
 | **`App.jsx`** | Goals state, `localStorage` sync via `goalStorage`, selected goal vs list, wizard step → header title, demo auth modal + session state, Gemini debug panel, timer overlay. |
 | **`CreateGoalWizard`** | Two-step intake; `onStepChange` keeps header in sync; `onComplete` → async Gemini + `createGoalFromIntake`. |
-| **`GoalDashboard`** | Cadence (“Overall Plan Summary”), progress, milestones embedded **per schedule week**, day modal aggregation across goals. |
+| **`GoalDashboard`** | Cadence (“Overall Plan Summary”: stats, work days line, reasoning—**no** `recommendedRestDays` bullet list), progress, milestones **per schedule week**, day modal aggregation across goals. |
 | **`DayTasksModal`** | Tasks for one date (all goals), tips, timer start. |
 | **`DemoAuthModal`** | Demo-only UI; no persistence, no network. |
 | **`geminiGoalPlan.js`** | `generateGoalPlanFromGemini`, JSON schema, system prompt, `todayDateKey` + `buildPlannerWeeks` in user payload. |
@@ -40,10 +40,14 @@ npm run lint
 
 Git from **repository root** (parent of `constai-app/` when nested): `git pull`, `git commit`, `git push`.
 
+**Deploy:** See **README → Deploying (e.g. Vercel)** for root directory, `dist`, and env vars.
+
+**Assets:** `public/favicon.svg` — blue lightning bolt favicon.
+
 ---
 
 ## Session history (abbreviated)
 
-Earlier iterations added: Gemini structured plans, fallback template, debug panel on failure, minutes-based availability, planner weeks with local dates, milestones aligned to weeks, day-centric task UI with timers, demo auth header avatar, UI copy/branding updates, and git hygiene for env files.
+Earlier iterations added: Gemini structured plans, fallback template, debug panel on failure, minutes-based availability, planner weeks with local dates, milestones aligned to weeks, day-centric task UI with timers, demo auth header avatar, UI copy/branding updates, git hygiene for env files, Vercel + custom domain notes, plan summary UI tweak (no rest-day bullets), and favicon refresh.
 
 *Safe to share; no credentials.*
