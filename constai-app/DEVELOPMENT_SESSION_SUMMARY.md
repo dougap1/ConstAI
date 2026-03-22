@@ -1,64 +1,49 @@
-# ConstAI — session summary (copy/paste)
+# CONST AI — development notes
 
-Concise record of work aligned with this Cursor session: goals, your prompts, and what changed in the codebase.
+**Canonical project documentation:** see **`README.md`** in this folder for setup, env vars, features, and repo layout.
 
----
-
-## Your prompts (chronological)
-
-1. **Run the server** — How to run the dev server to view the webpage.
-2. **Pull from GitHub** — Pull the latest `ConstAI` repo; later **pull again** after remote updates.
-3. **Where to see changes** — How to view diffs (local app, `git`, GitHub).
-4. **Commit changes** — Commit when the working tree was clean (nothing to commit).
-5. **Gemini integration** — Wire **Google Gemini** after goal wizard submit: structured **JSON** (not markdown), personalized **tasks** and **milestones**; **weekly** vs **daily** milestones from deadline horizon; keep user intake fields.
-6. **Push to repository** — Push `main` to `origin`.
-7. **Remove API key from repo** — Secret had been committed in `.env.example`; **history rewritten** + **force-push**; rotate key advised.
-8. **AI failures / debugging** — Show errors **persistently** (not a short toast) for debugging.
-9. **Gemini 1.5 Pro** — Set model via env; fixed wrong var **`VITE_MODEL`** → **`VITE_GEMINI_MODEL`**.
-10. **Best model & how data is sent** — Explained Flash vs Pro, and single JSON user payload + `responseSchema`.
-11. **404 `gemini-1.5-pro`** — Explained retired/invalid id; moved to **`gemini-2.5-pro`** / default **`gemini-2.5-flash`**.
-12. **Push + hide env files + this document** — Git push; **do not track** `.env.local` / `.env.example`; session doc with prompts.
+This file is a **lightweight supplement**: architecture touchpoints and historical context. It contains **no API keys**.
 
 ---
 
-## Technical changes (what shipped)
+## Architecture map (current)
 
-| Area | Change |
-|------|--------|
-| **Gemini** | `@google/generative-ai`, `generateGoalPlanFromGemini()` with `responseMimeType: application/json` + `responseSchema`. |
-| **Goal creation** | `createGoalFromIntake(intake, geminiRaw)`; `buildIntakeForModel`; `normalizeGeminiGoalPlan` validation + fallback template plan. |
-| **Milestones** | `getDaysUntilDeadline`; **≤14 days** → daily ladder; **>14** → weekly + nested dailies (fallback + AI instructions). |
-| **App** | Async wizard submit; loading state; toast for timer completion; **Gemini debug panel** on API/validation failure (persistent, copy, dismiss). |
-| **Models** | `VITE_GEMINI_MODEL`; defaults updated for current API (**2.5** family). |
-| **Security** | Leaked key removed from history; **`.env.local`** and **`.env.example`** intended to stay **untracked** (see `.gitignore`). |
-
----
-
-## Local environment (not in git)
-
-Create **`constai-app/.env.local`** next to `package.json` (restart `npm run dev` after edits):
-
-```env
-VITE_GEMINI_API_KEY=your_key_from_ai_studio
-
-# Optional — see https://ai.google.dev/gemini-api/docs/models
-VITE_GEMINI_MODEL=gemini-2.5-pro
-```
-
-You can copy **`constai-app/.env.example`** on your machine as a starting template; it is **gitignored** alongside `.env.local` so secrets and local copies are not pushed.
+| Layer | Role |
+|-------|------|
+| **`App.jsx`** | Goals state, `localStorage` sync via `goalStorage`, selected goal vs list, wizard step → header title, demo auth modal + session state, Gemini debug panel, timer overlay. |
+| **`CreateGoalWizard`** | Two-step intake; `onStepChange` keeps header in sync; `onComplete` → async Gemini + `createGoalFromIntake`. |
+| **`GoalDashboard`** | Cadence (“Overall Plan Summary”), progress, milestones embedded **per schedule week**, day modal aggregation across goals. |
+| **`DayTasksModal`** | Tasks for one date (all goals), tips, timer start. |
+| **`DemoAuthModal`** | Demo-only UI; no persistence, no network. |
+| **`geminiGoalPlan.js`** | `generateGoalPlanFromGemini`, JSON schema, system prompt, `todayDateKey` + `buildPlannerWeeks` in user payload. |
+| **`planNormalize.js`** | Validates raw JSON; `alignMilestonesToPlannerWeeks`; `assignMissingScheduledDates`. |
+| **`goalStorage.js`** | `constai-goals-v2` migrations; strips legacy fields over time. |
 
 ---
 
-## Commands reference
+## Environment & security
+
+- **`.env.local`** — `VITE_GEMINI_API_KEY`, optional `VITE_GEMINI_MODEL`. Ignored by git (see `.gitignore`).
+- **`*.local`** — Also ignores other `*.local` files.
+- Do not commit secrets; rotate keys if exposed.
+
+---
+
+## Commands (from `constai-app/`)
 
 ```bash
-cd constai-app
 npm install
 npm run dev
+npm run build
+npm run lint
 ```
 
-Repo root (parent of `constai-app/`): `git pull`, `git push origin main`.
+Git from **repository root** (parent of `constai-app/` when nested): `git pull`, `git commit`, `git push`.
 
 ---
 
-*Generated for handoff / portfolio notes — safe to share; contains no API keys.*
+## Session history (abbreviated)
+
+Earlier iterations added: Gemini structured plans, fallback template, debug panel on failure, minutes-based availability, planner weeks with local dates, milestones aligned to weeks, day-centric task UI with timers, demo auth header avatar, UI copy/branding updates, and git hygiene for env files.
+
+*Safe to share; no credentials.*
