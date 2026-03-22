@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const initialDetails = {
   whyItMatters: '',
@@ -12,10 +12,15 @@ export default function CreateGoalWizard({
   onComplete,
   onCancel,
   submitting = false,
+  onStepChange,
 }) {
   const [step, setStep] = useState(1)
   const [title, setTitle] = useState('')
   const [details, setDetails] = useState(initialDetails)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
 
   function handleContinue(e) {
     e.preventDefault()
@@ -81,9 +86,9 @@ export default function CreateGoalWizard({
           <div>
             <label
               htmlFor="goal-title"
-              className="text-sm font-semibold text-slate-800 dark:text-slate-200"
+              className="block text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100"
             >
-              Goal name
+              Goal Name
             </label>
             <input
               id="goal-title"
@@ -97,7 +102,7 @@ export default function CreateGoalWizard({
           <div className="flex flex-wrap gap-2">
             <button
               type="submit"
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl bg-emerald-700 px-6 text-sm font-semibold text-white shadow-lg shadow-emerald-900/25 transition hover:bg-emerald-600 active:scale-[0.98] dark:bg-emerald-800 dark:shadow-emerald-950/40 dark:hover:bg-emerald-700 sm:flex-none"
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl bg-sky-600 px-6 text-sm font-semibold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98] dark:bg-sky-600 dark:hover:bg-sky-500 sm:flex-none"
             >
               Proceed
             </button>

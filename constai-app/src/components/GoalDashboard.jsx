@@ -41,8 +41,8 @@ function RecommendedCadenceSection({ cadence }) {
       : '—'
   return (
     <section className="rounded-2xl border border-emerald-200/70 bg-emerald-50/80 p-4 text-sm dark:border-emerald-900/40 dark:bg-emerald-950/25">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300">
-        Plan
+      <p className="text-sm font-bold tracking-tight text-emerald-900 dark:text-emerald-200">
+        Overall Plan Summary
       </p>
       <p className="mt-1 font-semibold text-slate-900 dark:text-white">
         ~{cadence.sessionsPerWeek}× / week · ~{cadence.estimatedWeeks} wk · ~

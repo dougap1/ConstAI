@@ -7,6 +7,8 @@ import FocusTimerOverlay from './components/FocusTimerOverlay'
 import GoalCelebrationModal from './components/GoalCelebrationModal'
 import TaskCompletedToast from './components/TaskCompletedToast'
 import GeminiDebugPanel from './components/GeminiDebugPanel'
+import DemoAuthModal from './components/DemoAuthModal'
+import { getDemoAvatarLabel } from './lib/demoAuthAvatar'
 import { buildIntakeForModel, createGoalFromIntake } from './lib/createGoalModel'
 import {
   generateGoalPlanFromGemini,
@@ -28,6 +30,9 @@ export default function App() {
   const [taskToast, setTaskToast] = useState(null)
   const [creatingGoal, setCreatingGoal] = useState(false)
   const [geminiDebug, setGeminiDebug] = useState(null)
+  const [wizardStep, setWizardStep] = useState(1)
+  const [demoAuthModalOpen, setDemoAuthModalOpen] = useState(false)
+  const [demoAuthSession, setDemoAuthSession] = useState(null)
 
   useEffect(() => {
     timerSessionRef.current = timerSession
@@ -47,6 +52,10 @@ export default function App() {
     () => goals.find((g) => g.id === selectedGoalId) ?? null,
     [goals, selectedGoalId],
   )
+
+  useEffect(() => {
+    if (selectedGoalId) setWizardStep(1)
+  }, [selectedGoalId])
 
   function celebrateIfJustFinished(prevGoal, nextGoal) {
     if (!nextGoal?.tasks?.length) return
@@ -187,12 +196,48 @@ export default function App() {
 
       <header className="border-b border-slate-200/80 bg-white/40 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/40">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          <p className="inline-block bg-gradient-to-r from-sky-600 via-sky-200 to-cyan-400 bg-clip-text text-2xl font-black uppercase tracking-[0.22em] text-transparent antialiased drop-shadow-[0_0_16px_rgba(14,165,233,0.45)] drop-shadow-[0_1px_0_rgba(255,255,255,0.55)] sm:text-3xl sm:tracking-[0.26em] dark:from-sky-100 dark:via-white dark:to-cyan-200 dark:drop-shadow-[0_0_22px_rgba(34,211,238,0.4)] dark:drop-shadow-[0_1px_0_rgba(255,255,255,0.2)]">
-            CONST AI
-          </p>
-          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            What’s Your Goal?
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="inline-block bg-gradient-to-r from-sky-600 via-sky-200 to-cyan-400 bg-clip-text text-2xl font-black uppercase tracking-[0.22em] text-transparent antialiased drop-shadow-[0_0_16px_rgba(14,165,233,0.45)] drop-shadow-[0_1px_0_rgba(255,255,255,0.55)] sm:text-3xl sm:tracking-[0.26em] dark:from-sky-100 dark:via-white dark:to-cyan-200 dark:drop-shadow-[0_0_22px_rgba(34,211,238,0.4)] dark:drop-shadow-[0_1px_0_rgba(255,255,255,0.2)]">
+                CONST AI
+              </p>
+              <h1 className="mt-2 font-display text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+                {selectedGoal
+                  ? 'Ultimate Plan for Your Goal'
+                  : wizardStep === 2
+                    ? 'How to Tackle Your Goal'
+                    : "What's Your Goal?"}
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDemoAuthModalOpen(true)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-gradient-to-br from-sky-50 to-white text-xs font-bold text-sky-800 shadow-md shadow-sky-500/10 transition hover:border-sky-300/80 hover:shadow-lg dark:border-slate-600 dark:from-slate-800 dark:to-slate-900 dark:text-sky-200 dark:hover:border-sky-500/40"
+              aria-label={
+                demoAuthSession
+                  ? `Account: ${demoAuthSession.displayName || demoAuthSession.email}`
+                  : 'Open sign in or register (demo)'
+              }
+            >
+              {demoAuthSession ? (
+                getDemoAvatarLabel(demoAuthSession)
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-5 w-5 opacity-80"
+                  aria-hidden
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.5 6a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -220,6 +265,7 @@ export default function App() {
               <CreateGoalWizard
                 onComplete={handleIntakeComplete}
                 submitting={creatingGoal}
+                onStepChange={setWizardStep}
               />
             }
           />
@@ -260,6 +306,13 @@ export default function App() {
       <GeminiDebugPanel
         debug={geminiDebug}
         onDismiss={() => setGeminiDebug(null)}
+      />
+
+      <DemoAuthModal
+        open={demoAuthModalOpen}
+        onClose={() => setDemoAuthModalOpen(false)}
+        session={demoAuthSession}
+        onDemoSessionChange={setDemoAuthSession}
       />
 
       <footer className="border-t border-slate-200/80 py-6 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
