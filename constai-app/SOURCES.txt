@@ -1,0 +1,39 @@
+Sources and tools used to build ConstAI
+========================================
+
+Runtime & UI
+------------
+- React (https://react.dev/)
+- React DOM (https://react.dev/)
+
+Build & styling
+---------------
+- Vite (https://vite.dev/)
+- @vitejs/plugin-react (https://github.com/vitejs/vite-plugin-react)
+- Tailwind CSS (https://tailwindcss.com/)
+- @tailwindcss/vite (Tailwind Vite integration)
+
+AI / APIs
+---------
+- Google Generative AI SDK for JavaScript (@google/generative-ai)
+- Google Gemini API (https://ai.google.dev/)
+
+Quality
+-------
+- ESLint (https://eslint.org/)
+- eslint-plugin-react-hooks
+- eslint-plugin-react-refresh
+
+Platform & package management
+-----------------------------
+- Node.js (https://nodejs.org/)
+- npm (https://www.npmjs.com/)
+
+Development environment
+-----------------------
+- Cursor — IDE and AI-assisted development (https://cursor.com/)
+
+Version control & hosting (typical)
+-----------------------------------
+- Git
+- GitHub (or your chosen remote)
