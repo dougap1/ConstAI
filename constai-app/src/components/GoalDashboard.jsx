@@ -54,13 +54,6 @@ function RecommendedCadenceSection({ cadence }) {
       <p className="mt-3 text-xs leading-relaxed text-slate-800 dark:text-slate-200">
         {cadence.reasoningSummary}
       </p>
-      {cadence.recommendedRestDays?.length ? (
-        <ul className="mt-2 list-inside list-disc text-xs text-slate-700 dark:text-slate-300">
-          {cadence.recommendedRestDays.map((line, i) => (
-            <li key={i}>{line}</li>
-          ))}
-        </ul>
-      ) : null}
     </section>
   )
 }
