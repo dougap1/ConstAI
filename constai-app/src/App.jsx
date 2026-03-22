@@ -33,6 +33,7 @@ export default function App() {
   const [wizardStep, setWizardStep] = useState(1)
   const [demoAuthModalOpen, setDemoAuthModalOpen] = useState(false)
   const [demoAuthSession, setDemoAuthSession] = useState(null)
+  const [aboutOpen, setAboutOpen] = useState(false)
 
   useEffect(() => {
     timerSessionRef.current = timerSession
@@ -269,14 +270,47 @@ export default function App() {
               />
             }
             footerSlot={
-              <div className="mt-10 border-t border-slate-200/80 pt-8 text-center dark:border-slate-800">
-                <p className="font-display text-base font-semibold text-slate-800 dark:text-slate-100">
-                  Constant AI
-                </p>
-                <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-600 dark:text-slate-400">
-                  Stay consistent, follow a clear plan, and finish the goals that matter to you.
-                </p>
-              </div>
+              <section className="mt-10 border-t border-slate-200/80 pt-8 text-center dark:border-slate-800">
+                <h2 className="m-0 text-[10px] font-semibold uppercase tracking-[0.2em]">
+                  <button
+                    type="button"
+                    id="home-about-heading"
+                    aria-expanded={aboutOpen}
+                    aria-controls="home-about-panel"
+                    onClick={() => setAboutOpen((o) => !o)}
+                    className="inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-inherit text-slate-400 underline decoration-slate-400/80 underline-offset-[5px] transition-colors hover:text-slate-500 hover:decoration-slate-500/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500/60 dark:text-slate-500 dark:decoration-slate-500/70 dark:hover:text-slate-400 dark:hover:decoration-slate-400/70"
+                  >
+                    About
+                    <svg
+                      aria-hidden
+                      className={`size-3 shrink-0 text-slate-400 transition-transform duration-300 ease-out motion-reduce:transition-none dark:text-slate-500 ${aboutOpen ? 'rotate-180' : ''}`}
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 4.5 6 7.5 9 4.5" />
+                    </svg>
+                  </button>
+                </h2>
+                <div
+                  id="home-about-panel"
+                  role="region"
+                  aria-labelledby="home-about-heading"
+                  className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${aboutOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+                >
+                  <div className="overflow-hidden min-h-0">
+                    <p className="mx-auto max-w-2xl pt-3 text-xs leading-relaxed text-slate-400/90 dark:text-slate-500/95">
+                      CONST AI is a platform for turning a personal goal into a deadline-based plan: you
+                      describe what you want, how much free time you have on weekdays vs weekends, and
+                      the app produces milestones by calendar week, tasks on specific dates, and a
+                      day-by-day schedule with optional focus timers.
+                    </p>
+                  </div>
+                </div>
+              </section>
             }
           />
         )}
