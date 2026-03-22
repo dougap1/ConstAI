@@ -1,6 +1,6 @@
-# CONST AI (`constai-app`)
+# ConstAI (`constai-app`)
 
-**CONST AI** is a client-side web app for turning a personal goal into a **deadline-based plan**: you describe what you want, how much **free time** you have on **weekdays vs weekends**, and the app produces **milestones by calendar week**, **tasks on specific dates**, and a **day-by-day schedule** with optional **focus timers**.
+**ConstAI** is a client-side web app for turning a personal goal into a **deadline-based plan**: you describe what you want, how much **free time** you have on **weekdays vs weekends**, and the app produces **milestones by calendar week**, **tasks on specific dates**, and a **day-by-day schedule** with optional **focus timers**.
 
 Planning uses **Google Gemini** when you configure an API key; otherwise a **local template plan** keeps the app fully usable offline.
 
