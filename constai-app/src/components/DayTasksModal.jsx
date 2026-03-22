@@ -52,40 +52,70 @@ export default function DayTasksModal({
             </li>
           ) : null}
           {(entries || []).map(({ goalId, goalTitle, task }) => (
-            <li key={`${goalId}-${task.id}`} className="flex gap-3 px-4 py-3">
+            <li
+              key={`${goalId}-${task.id}`}
+              className={`relative flex items-center gap-4 py-3 pl-4 ${
+                task.done ? 'pr-12' : 'pr-4'
+              }`}
+            >
+              {task.done ? (
+                <span
+                  className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white shadow-md ring-2 ring-white dark:bg-emerald-500 dark:ring-slate-900"
+                  aria-label="Completed"
+                  title="Completed"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="size-3.5"
+                    aria-hidden
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </span>
+              ) : null}
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
                   {goalTitle}
                 </p>
-                <p className="mt-0.5 text-sm font-medium text-slate-900 dark:text-slate-100">
+                <p
+                  className={`mt-0.5 text-sm font-medium text-slate-900 dark:text-slate-100 ${
+                    task.done ? 'text-slate-500 line-through dark:text-slate-400' : ''
+                  }`}
+                >
                   {task.title}
                 </p>
                 {task.tip ? (
-                  <p className="mt-1 text-xs leading-snug text-slate-600 dark:text-slate-400">
+                  <p
+                    className={`mt-1 text-xs leading-snug ${
+                      task.done
+                        ? 'text-slate-500 line-through dark:text-slate-500'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
                     {task.tip}
                   </p>
                 ) : null}
               </div>
-              <div className="flex shrink-0 flex-col items-end justify-center gap-1">
-                {task.done ? (
-                  <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">
-                    Done
+              {!task.done ? (
+                <div className="ml-auto flex w-24 shrink-0 flex-col items-stretch justify-center gap-1.5 sm:w-28">
+                  <span className="text-center text-[10px] font-medium tabular-nums tracking-tight text-slate-500 dark:text-slate-400">
+                    {minutesFor(goalId, task)} min
                   </span>
-                ) : (
-                  <>
-                    <span className="text-[10px] text-slate-500">
-                      {minutesFor(goalId, task)} min
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onStartTimer(goalId, task)}
-                      className="rounded-xl bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-sky-500"
-                    >
-                      Timer
-                    </button>
-                  </>
-                )}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => onStartTimer(goalId, task)}
+                    className="w-full rounded-xl bg-sky-600 px-2 py-2 text-center text-xs font-semibold text-white shadow hover:bg-sky-500"
+                  >
+                    Timer
+                  </button>
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>

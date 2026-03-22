@@ -245,6 +245,16 @@ export default function FocusTimerOverlay({
                   {formatMmSs(displayRemaining)}
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  clearTick()
+                  setPhase('done')
+                }}
+                className="mt-5 w-full max-w-xs rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 active:scale-[0.99] sm:w-auto sm:min-w-[14rem]"
+              >
+                Stop timer &amp; mark complete
+              </button>
               <p className="mt-4 text-xs text-slate-500">
                 Segment {active ? active.index + 1 : 0} of {segments.length}
               </p>

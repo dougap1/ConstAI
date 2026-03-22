@@ -24,6 +24,16 @@ function aggregateTasksForDate(allGoals, dateKey) {
   return out
 }
 
+function goalTasksOnDate(goal, dateKey) {
+  return (goal.tasks || []).filter((t) => t.scheduledDate === dateKey)
+}
+
+/** True when every task for this goal on that date is done (each task tracked by `id`). */
+function allGoalTasksDoneOnDate(goal, dateKey) {
+  const list = goalTasksOnDate(goal, dateKey)
+  return list.length > 0 && list.every((t) => t.done)
+}
+
 function FreeTimeSummary({ weekdayFreeMinutes, weekendFreeMinutes }) {
   return (
     <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -195,17 +205,39 @@ export default function GoalDashboard({
                 {w.days.map((d) => {
                   const count = aggregateTasksForDate(allGoals, d.dateKey).length
                   const isToday = d.dateKey === today
+                  const dayCompleteForGoal = allGoalTasksDoneOnDate(goal, d.dateKey)
                   return (
                     <button
                       key={d.dateKey}
                       type="button"
                       onClick={() => openDay(d.dateKey)}
-                      className={`min-w-[4.5rem] rounded-xl border px-2 py-2 text-left text-xs transition ${
+                      className={`relative min-w-[4.5rem] rounded-xl border px-2 py-2 pr-6 text-left text-xs transition ${
                         isToday
                           ? 'border-red-500 bg-red-50 font-semibold text-red-900 dark:border-red-500 dark:bg-red-950/40 dark:text-red-100'
                           : 'border-slate-200 bg-white/90 text-slate-800 hover:border-sky-400 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100'
                       } ${count === 0 ? 'opacity-50' : ''}`}
                     >
+                      {dayCompleteForGoal ? (
+                        <span
+                          className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm dark:bg-emerald-500"
+                          aria-label="All tasks for this goal on this day are done"
+                          title="All your tasks this day are done"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            className="size-3"
+                            aria-hidden
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </span>
+                      ) : null}
                       <span className="block">{d.weekdayShort}</span>
                       <span className="block text-[10px] opacity-80">{d.label}</span>
                       <span className="mt-1 block text-[10px] text-sky-600 dark:text-sky-400">

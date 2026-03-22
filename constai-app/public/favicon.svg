@@ -1,16 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true">
   <defs>
-    <linearGradient id="bolt" x1="7" y1="6" x2="25" y2="26" gradientUnits="userSpaceOnUse">
+    <linearGradient id="b" x1="10" y1="4" x2="22" y2="28" gradientUnits="userSpaceOnUse">
       <stop stop-color="#7dd3fc"/>
-      <stop offset="0.45" stop-color="#0ea5e9"/>
-      <stop offset="1" stop-color="#0369a1"/>
+      <stop offset="0.5" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#0284c7"/>
     </linearGradient>
   </defs>
   <rect width="32" height="32" rx="8" fill="#0c4a6e"/>
-  <g transform="translate(4 4)">
-    <path
-      fill="url(#bolt)"
-      d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"
-    />
-  </g>
+  <!-- Bold lightning bolt, centered -->
+  <path
+    fill="url(#b)"
+    d="M19.25 3.5 8.25 17.25h5.75L11.5 28.5 24.75 13.5H19l2.5-10Z"
+  />
 </svg>
