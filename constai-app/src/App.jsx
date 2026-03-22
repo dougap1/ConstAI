@@ -268,6 +268,16 @@ export default function App() {
                 onStepChange={setWizardStep}
               />
             }
+            footerSlot={
+              <div className="mt-10 border-t border-slate-200/80 pt-8 text-center dark:border-slate-800">
+                <p className="font-display text-base font-semibold text-slate-800 dark:text-slate-100">
+                  Constant AI
+                </p>
+                <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  Stay consistent, follow a clear plan, and finish the goals that matter to you.
+                </p>
+              </div>
+            }
           />
         )}
       </main>
